@@ -249,7 +249,7 @@ tst_trials=[]
 tst_enrolls = []
 tst_tests = []
 
-with open('/data/sls/scratch/swshon/dataset/voxceleb1/voxceleb1_test.txt','rb') as csvfile:
+with open('local/voxceleb1_test.txt','rb') as csvfile:
     row = csv.reader(csvfile, delimiter=' ')
     for line in row:
         tst_trials = np.append(tst_trials,line[0])
