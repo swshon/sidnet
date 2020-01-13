@@ -17,7 +17,7 @@ if (system("mkdir -p $tmp_dir") != 0) {
   die "Error making directory $tmp_dir";
 }
 
-open(IN_TRIALS, "<", "$db_base/voxceleb1.verification.test.csv") or die "cannot open trials list";
+open(IN_TRIALS, "<", "local/voxceleb1.verification.test.csv") or die "cannot open trials list";
 open(OUT_TRIALS,">", "$out_dir/voxceleb1_trials_sv") or die "Could not open the output file $out_dir/voxceleb1_trials_sv";
 $dummy = <IN_TRIALS>;
 while(<IN_TRIALS>) {
@@ -44,7 +44,7 @@ if (system("mkdir -p $tmp_dir") != 0) {
   die "Error making directory $tmp_dir";
 }
 
-open(IN_TRIALS, "<", "$db_base/voxceleb1.csv") or die "cannot open trials list";
+open(IN_TRIALS, "<", "local/voxceleb1.csv") or die "cannot open trials list";
 # open(GNDR,">", "$out_dir/spk2gender") or die "Could not open the output file $out_dir/spk2gender";
 open(SPKR,">", "$out_dir/utt2spk") or die "Could not open the output file $out_dir/utt2spk";
 open(WAV,">", "$out_dir/wav.scp") or die "Could not open the output file $out_dir/wav.scp";
@@ -65,15 +65,6 @@ close(SPKR) || die;
 close(WAV) || die;
 
 
-# if (system(
-#   "utils/utt2spk_to_spk2utt.pl $out_dir/utt2spk >$out_dir/spk2utt") != 0) {
-#   die "Error creating spk2utt file in directory $out_dir";
-# }
-# system("utils/fix_data_dir.sh $out_dir");
-# if (system("utils/validate_data_dir.sh --no-text --no-feats $out_dir") != 0) {
-#   die "Error validating directory $out_dir";
-# }
-
 
 $out_dir = "$out_base_dir/voxceleb1_test";
 
@@ -83,7 +74,7 @@ if (system("mkdir -p $tmp_dir") != 0) {
 }
 
 # open(IN_TRIALS, "<", "$db_base/voxceleb1.csv") or die "cannot open trials list";
-open(IN_TRIALS, "<", "$db_base/voxceleb1_test.txt") or die "cannot open trials list";
+open(IN_TRIALS, "<", "local/voxceleb1_test.txt") or die "cannot open trials list";
 # open(GNDR,">", "$out_dir/spk2gender") or die "Could not open the output file $out_dir/spk2gender";
 open(SPKR,">", "$tmp_dir/utt2spk") or die "Could not open the output file $out_dir/utt2spk";
 open(WAV,">", "$tmp_dir/wav.scp") or die "Could not open the output file $out_dir/wav.scp";
@@ -116,16 +107,6 @@ if (system(
   "cat $tmp_dir/wav.scp | sort | uniq >$out_dir/wav.scp") != 0) {
   die "Error creating wav.scp file in directory $out_dir";
 }
-
-# if (system(
-#   "utils/utt2spk_to_spk2utt.pl $out_dir/utt2spk >$out_dir/spk2utt") != 0) {
-#   die "Error creating spk2utt file in directory $out_dir";
-# }
-# system("utils/fix_data_dir.sh $out_dir");
-# if (system("utils/validate_data_dir.sh --no-text --no-feats $out_dir") != 0) {
-#   die "Error validating directory $out_dir";
-# }
-
 
 
 
