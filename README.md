@@ -27,7 +27,7 @@ Scoring was done using Cosine similarity. Expect 10~20% improvement if PLDA was 
     5 layer CNN + Additive Margin Softmax (AMS) : 6.16%
     Resnet-50 + Softmax : 7.33%
     Resnet-50 + AMS :6.10%
-    REsnet-50 + AMS + attentive pooling : 5.73
+    REsnet-50 + AMS + attentive pooling : 5.73%
 
 # Requirements (for example training code and baseline code)
     Python 2.7
