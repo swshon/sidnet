@@ -1,9 +1,10 @@
 #!/bin/bash
 export LC_ALL=C
-stage=5
+stage=1
 feat_type=logmel
 
 if [ $stage -eq 0 ]; then
+  # Prepare scripts
   ln -s ../../../sidnet/scripts scripts
   ln -s ../../../sidnet/models models
 #  ln -s ../../../../../../../temp/voxceleb1_dev_1utt_logmel_win400_hop160_vad_fixed598.1.tfrecords voxceleb1_dev_1utt_logmel_win400_hop160_vad_fixed598.1.tfrecords
@@ -11,13 +12,18 @@ if [ $stage -eq 0 ]; then
 fi
 
 if [ $stage -eq 1 ]; then
+  # Preprare voxceleb1 data
   ./local/make_voxceleb1_sv.pl /data/sls/SID/Corpora/voxceleb1/ data
+
+  # if you need shuffle (you don't need to shuffle)
   #python ./scripts/shuffle_data.py --source data/voxceleb1_dev --target data/voxceleb1_dev_shuffle --utt2spk
   #python ./scripts/split_data.py --source data/voxceleb1_dev_shuffle --split 100 --utt2spk
+
+  # Split data into multiple for parallel jobs
   python ./scripts/split_data.py --source data/voxceleb1_dev --split 100 --utt2spk
   python ./scripts/split_data.py --source data/voxceleb1_test --split 1 --utt2spk
 
-  #Pick first utterance per speakers for validation purpose
+  # Pick first utterance per speakers for validation purpose
   python ./local/pick_1utt_per_1spk.py --source data/voxceleb1_dev --target data/voxceleb1_dev_1utt
   python ./scripts/split_data.py --source data/voxceleb1_dev_1utt --split 1 --utt2spk
 
