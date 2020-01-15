@@ -28,8 +28,14 @@ Scoring was done using Cosine similarity. Note these result only use voxceleb1 d
     5 layer CNN + Additive Margin Softmax (AMS) : 6.16%
     Resnet-50 + Softmax : 7.33%
     Resnet-50 + AMS :6.10%
-    REsnet-50 + AMS + attentive pooling : 5.73%    
+    REsnet-50 + AMS + Self Attention Pooling (SAP) : 5.73%    
     
+For comparison,
+    
+    Nagrani et al. (VGG-M): 7.82%
+    Hajibabaei et al. (Temporal average pooling, Cosine Similarity , Resnet20, AMS, Augmentation): 4.30%
+    Okabe et al. (x-vector, PLDA, Softmax, SAP, Augmentation) : 3.85%
+    Chung et al. (Thin Resnet-34, SAP, Softmax, Augmentation): 5.71%
 
 # Requirements (for example training code and baseline code)
     Python 2.7
