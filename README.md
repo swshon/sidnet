@@ -22,13 +22,14 @@ A brief features of the training scheme is below
 
 
 # Performance evaluation on Voxceleb1 test benchmark test (EER)
-Scoring was done using Cosine similarity. Expect 10~20% improvement if PLDA was used instead of Cosine similarity.
+Scoring was done using Cosine similarity. Note these result only use voxceleb1 development dataset for training. There's no training data augmentation using noise or Room Impulse Response (RIR).
 
     5 layer CNN + Softmax: 7.06%
     5 layer CNN + Additive Margin Softmax (AMS) : 6.16%
     Resnet-50 + Softmax : 7.33%
     Resnet-50 + AMS :6.10%
-    REsnet-50 + AMS + attentive pooling : 5.73%
+    REsnet-50 + AMS + attentive pooling : 5.73%    
+    
 
 # Requirements (for example training code and baseline code)
     Python 2.7
