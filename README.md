@@ -4,6 +4,7 @@ This repository provides SIDNET Tool for the speaker verification task.
 # Tutorial (on Voxceleb1)
 First, you need to download dataset and clone this repository. Then run
 
+    cd egs/voxceleb1/v1
     ./run.sh
 Note that this tutorial does not use any speech or audio data other than voxceleb1 data for benchmark purpose. Hence, there is no noise augmentation on the training data.
 
