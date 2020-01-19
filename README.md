@@ -21,7 +21,7 @@ A brief features of the training scheme is below
     Training took roughly 12 hours on Titan X Pascal (training set has roughly 200h)
 
 
-# Performance evaluation on Voxceleb1 test benchmark test (EER)
+# Performance evaluation on Voxceleb1 test benchmark test using voxceleb1 training set (EER)
 Scoring was done using Cosine similarity. Note these result only use voxceleb1 development dataset for training. There's no training data augmentation using noise or Room Impulse Response (RIR).
 
     5 layer CNN + Softmax: 7.06%
@@ -36,6 +36,16 @@ For comparison,
     Hajibabaei et al. (Temporal average pooling, Cosine Similarity , Resnet20, AMS, Augmentation): 4.30%
     Okabe et al. (x-vector, PLDA, Softmax, SAP, Augmentation) : 3.85%
     Chung et al. (Thin Resnet-34, SAP, Softmax, Augmentation): 5.71%
+
+# Performance evaluation on Voxceleb1 test benchmark test using voxceleb1+2 training set (EER)
+Scoring was done using Cosine similarity. Note these result only use voxceleb1 development dataset for training. There's no training data augmentation using noise or Room Impulse Response (RIR).
+
+    REsnet-50 + AMS + Self Attention Pooling (SAP) : 3.19%
+    
+For comparison,
+    
+    Xie et al. (Thin Resnet-34, GhostVLAD, Softmax): 3.22%
+    Xie et al. (Thin Resnet-34, GhostVLAD, AMS): 3.23%
 
 # Requirements (for example training code and baseline code)
     Python 2.7
