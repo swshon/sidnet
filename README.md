@@ -40,7 +40,7 @@ For comparison,
 # Performance evaluation on Voxceleb1 test benchmark test using voxceleb1+2 training set (EER)
 Scoring was done using Cosine similarity. Note these result only use voxceleb1 development dataset for training. There's no training data augmentation using noise or Room Impulse Response (RIR).
 
-    REsnet-50 + AMS + Self Attention Pooling (SAP) : 3.19%
+    REsnet-50 + AMS + Self Attention Pooling (SAP) : 2.88%
     
 For comparison,
     
