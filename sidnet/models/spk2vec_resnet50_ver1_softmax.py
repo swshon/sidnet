@@ -1,0 +1,226 @@
+import tensorflow as tf
+import numpy as np
+from tensorflow.contrib.framework.python.ops import arg_scope
+from tensorflow.contrib.slim.python.slim.nets import resnet_utils
+from tensorflow.contrib.slim.python.slim.nets import resnet_v2
+from tensorflow.contrib import layers as layers_lib
+from tensorflow.contrib.layers.python.layers import layers
+from tensorflow.contrib.layers.python.layers import utils
+from tensorflow.contrib import slim as contrib_slim
+
+slim = contrib_slim
+
+class nn:
+    # Create model
+    def __init__(self, x1, y_, num_classes, is_training, global_pool, output_stride, reuse, scope):
+        #define resnet structure
+        blocks = [
+            resnet_v2.resnet_v2_block('block1', base_depth=16, num_units=3, stride=[1, 1]),
+            resnet_v2.resnet_v2_block('block2', base_depth=32, num_units=4, stride=[1, 2]),
+            resnet_v2.resnet_v2_block('block3', base_depth=64, num_units=6, stride=[1, 2]),
+            resnet_v2.resnet_v2_block('block4', base_depth=128, num_units=3, stride=[1, 2]),
+        ]
+        inputlayer = self.cmn(x1)
+        loss,end_points = self.resnet_v2_spkid(inputlayer,
+                               y_,
+                               blocks,
+                               num_classes = num_classes,
+                               is_training = is_training,
+                               global_pool = global_pool,
+                               output_stride = output_stride,
+                               reuse = reuse,
+                               scope = scope)
+
+        self.end_points = end_points
+        self.loss = loss
+        self.label=y_
+
+    def resnet_v2_spkid(self,inputs,
+                        spk_labels,
+                        blocks,
+                        num_classes,
+                        is_training,
+                        global_pool,
+                        output_stride,
+                        reuse,
+                        scope):
+
+
+        with arg_scope(resnet_v2.resnet_arg_scope()):
+            with tf.variable_scope(scope, 'resnet_v2', [inputs], reuse=reuse) as sc:
+                end_points_collection = sc.original_name_scope + '_end_points'
+                with arg_scope([layers_lib.conv2d, resnet_v2.bottleneck, slim.conv2d,
+                                     self.stack_blocks_dense], outputs_collections=end_points_collection):
+                    with arg_scope([layers_lib.conv2d],
+                            weights_regularizer = None,
+                            weights_initializer = tf.contrib.layers.xavier_initializer(),
+                            biases_initializer= tf.constant_initializer(0.001) ):
+
+                        with arg_scope([layers.batch_norm], is_training=is_training,
+                                decay=0.9, epsilon=1e-3, scale=True,
+                                param_initializers={
+                                    "beta": tf.constant_initializer(value=0),
+                                    "gamma": tf.random_normal_initializer(mean=1, stddev=0.045),
+                                    "moving_mean": tf.constant_initializer(value=0),
+                                    "moving_variance": tf.constant_initializer(value=1)} ):
+                            net = inputs
+                            with arg_scope([layers_lib.conv2d], activation_fn=None, normalizer_fn=None,weights_regularizer=None):
+                                net = resnet_utils.conv2d_same(net, 64, 13, 1, scope='conv1')
+                            # net = layers.max_pool2d(net, [2, 2], stride=2, scope='pool1')
+                            # net = resnet_utils.stack_blocks_dense(net, blocks, output_stride)
+                            net = self.stack_blocks_dense(net, blocks, output_stride)
+                            net = layers.batch_norm(net, activation_fn=tf.nn.relu, scope='postnorm')
+                            end_points = utils.convert_collection_to_dict(end_points_collection)
+                            net = layers_lib.conv2d(net, 512, [1, 5], stride=1, activation_fn=None,
+                                            normalizer_fn=None, scope='res_fc',padding='VALID')
+                            end_points[sc.name + '/res_fc'] = net
+                            net = layers.batch_norm(net, activation_fn=tf.nn.relu, scope='res_fc_bn')
+
+                            if global_pool:
+                                ## net : batchsize X W(frame_length) X 1 X Dim
+                                ## Global average pooling.
+                                # net = tf.reduce_mean(net, [1], name='pool5', keep_dims=True)
+
+                                ## Global statistical pooling
+                                mean,var = tf.nn.moments(net,1,name='pool5', keep_dims=True)
+                                net = tf.concat([mean,var],3)
+
+                                end_points['global_pool'] = net
+
+                            #Fully Connected layers
+                            #fc1
+                            net = layers_lib.conv2d(net, 1000, [1, 1], stride=1, activation_fn=None,
+                                            normalizer_fn=None, scope='fc1')
+                            end_points[sc.name + '/fc1'] = net
+                            net = layers.batch_norm(net, activation_fn=tf.nn.relu, scope='fc1_bn')
+                            #fc2
+                            net = layers_lib.conv2d(net, 512, [1, 1], stride=1, activation_fn=None,
+                                            normalizer_fn=None, scope='fc2')
+                            end_points[sc.name + '/fc2'] = net
+                            net = layers.batch_norm(net, activation_fn=tf.nn.relu, scope='fc2_bn')
+
+                            #outputlayer
+                            net = layers_lib.conv2d(net, num_classes, [1, 1], stride=1, activation_fn=None,
+                                            normalizer_fn=None, scope='logits')
+                            end_points[sc.name + '/logits'] = net
+                            net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
+                            end_points[sc.name + '/spatial_squeeze'] = net
+
+                            end_points['predictions'] = layers.softmax(net, scope='predictions')
+
+                            #loss
+                            loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=spk_labels, logits=net))
+                            end_points[sc.name + '/loss'] = loss
+                            end_points[sc.name + '/spk_labels'] = spk_labels
+
+                            return loss, end_points
+
+    def cmvn(self,temp_batch):
+        mean = tf.reduce_mean(temp_batch,1,keep_dims=True)
+        std = tf.sqrt( tf.reduce_mean( tf.square(temp_batch-mean),1,keep_dims=True) )
+        temp_batch = tf.divide(tf.subtract(temp_batch , mean),std)
+        return temp_batch
+
+    def cmn(self,temp_batch):
+        temp_batch = tf.squeeze(temp_batch,axis=-1)
+        mean = tf.reduce_mean(temp_batch,1,keep_dims=True)
+        std = tf.sqrt( tf.reduce_mean( tf.square(temp_batch-mean),1,keep_dims=True) )
+        temp_batch = tf.subtract(temp_batch , mean)
+        temp_batch = tf.expand_dims(temp_batch,-1)
+        return temp_batch
+
+    @slim.add_arg_scope
+    def stack_blocks_dense(self, net, blocks, output_stride=None,
+                           store_non_strided_activations=False,
+                           outputs_collections=None,
+                           weights_regularizer = None,
+                           weights_initializer = None,
+                           biases_initializer = None):
+      """Stacks ResNet `Blocks` and controls output feature density.
+      First, this function creates scopes for the ResNet in the form of
+      'block_name/unit_1', 'block_name/unit_2', etc.
+      Second, this function allows the user to explicitly control the ResNet
+      output_stride, which is the ratio of the input to output spatial resolution.
+      This is useful for dense prediction tasks such as semantic segmentation or
+      object detection.
+      Most ResNets consist of 4 ResNet blocks and subsample the activations by a
+      factor of 2 when transitioning between consecutive ResNet blocks. This results
+      to a nominal ResNet output_stride equal to 8. If we set the output_stride to
+      half the nominal network stride (e.g., output_stride=4), then we compute
+      responses twice.
+      Control of the output feature density is implemented by atrous convolution.
+      Args:
+        net: A `Tensor` of size [batch, height, width, channels].
+        blocks: A list of length equal to the number of ResNet `Blocks`. Each
+          element is a ResNet `Block` object describing the units in the `Block`.
+        output_stride: If `None`, then the output will be computed at the nominal
+          network stride. If output_stride is not `None`, it specifies the requested
+          ratio of input to output spatial resolution, which needs to be equal to
+          the product of unit strides from the start up to some level of the ResNet.
+          For example, if the ResNet employs units with strides 1, 2, 1, 3, 4, 1,
+          then valid values for the output_stride are 1, 2, 6, 24 or None (which
+          is equivalent to output_stride=24).
+        store_non_strided_activations: If True, we compute non-strided (undecimated)
+          activations at the last unit of each block and store them in the
+          `outputs_collections` before subsampling them. This gives us access to
+          higher resolution intermediate activations which are useful in some
+          dense prediction problems but increases 4x the computation and memory cost
+          at the last unit of each block.
+        outputs_collections: Collection to add the ResNet block outputs.
+      Returns:
+        net: Output tensor with stride equal to the specified output_stride.
+      Raises:
+        ValueError: If the target output_stride is not valid.
+      """
+      # The current_stride variable keeps track of the effective stride of the
+      # activations. This allows us to invoke atrous convolution whenever applying
+      # the next residual unit would result in the activations having stride larger
+      # than the target output_stride.
+      current_stride = 1
+
+      # The atrous convolution rate parameter.
+      rate = 1
+
+      for block in blocks:
+        with tf.variable_scope(block.scope, 'block', [net]) as sc:
+          block_stride = 1
+          for i, unit in enumerate(block.args):
+            if store_non_strided_activations and i == len(block.args) - 1:
+              # Move stride from the block's last unit to the end of the block.
+              block_stride = unit.get('stride', 1)
+              unit = dict(unit, stride=1)
+
+            with tf.variable_scope('unit_%d' % (i + 1), values=[net]):
+              # If we have reached the target output_stride, then we need to employ
+              # atrous convolution with stride=1 and multiply the atrous rate by the
+              # current unit's stride for use in subsequent layers.
+              if output_stride is not None and current_stride == output_stride:
+                net = block.unit_fn(net, rate=rate, **dict(unit, stride=1))
+                rate *= unit.get('stride', 1)
+
+              else:
+                net = block.unit_fn(net, rate=1, **unit)
+                if isinstance(unit.get('stride', 1), int):
+                    st = unit.get('stride', 1)
+                else:
+                    st = unit.get('stride', 1)[0]
+                current_stride *= st
+                if output_stride is not None and current_stride > output_stride:
+                  raise ValueError('The target output_stride cannot be reached.')
+
+          # Collect activations at the block's end before performing subsampling.
+          net = slim.utils.collect_named_outputs(outputs_collections, sc.name, net)
+
+          # Subsampling of the block's output activations.
+          if output_stride is not None and current_stride == output_stride:
+            rate *= block_stride
+          else:
+            net = resnet_utils.subsample(net, block_stride)
+            current_stride *= block_stride
+            if output_stride is not None and current_stride > output_stride:
+              raise ValueError('The target output_stride cannot be reached.')
+
+      if output_stride is not None and current_stride != output_stride:
+        raise ValueError('The target output_stride cannot be reached.')
+
+      return net

@@ -11,9 +11,9 @@ from tensorflow.contrib import slim as contrib_slim
 slim = contrib_slim
 
 class nn:
-    # Create model
+    ## Create model
     def __init__(self, x1, y_, num_classes, is_training, global_pool, output_stride, reuse, scope):
-        #define resnet structure
+        ## define resnet structure
         blocks = [
             resnet_v2.resnet_v2_block('block1', base_depth=16, num_units=3, stride=[1, 1]),
             resnet_v2.resnet_v2_block('block2', base_depth=32, num_units=4, stride=[1, 2]),
@@ -51,7 +51,7 @@ class nn:
                 end_points_collection = sc.original_name_scope + '_end_points'
                 with arg_scope([layers_lib.conv2d, resnet_v2.bottleneck, slim.conv2d,
                                      self.stack_blocks_dense], outputs_collections=end_points_collection):
-                    with arg_scope([layers_lib.conv2d], 
+                    with arg_scope([layers_lib.conv2d],
                             weights_regularizer = None,
                             weights_initializer = tf.contrib.layers.xavier_initializer(),
                             biases_initializer= tf.constant_initializer(0.001) ):
@@ -77,32 +77,52 @@ class nn:
                             net = layers.batch_norm(net, activation_fn=tf.nn.relu, scope='res_fc_bn')
 
                             if global_pool:
-                                # Global average pooling.
-                                net = tf.reduce_mean(net, [1], name='pool5', keep_dims=True)
+                                ## net : batchsize X W(frame_length) X 1 X Dim
+                                ## Global average pooling.
+                                # net = tf.reduce_mean(net, [1], name='pool5', keep_dims=True)
+
+                                ## Global statistical pooling
+                                # mean,var = tf.nn.moments(net,1,name='pool5', keep_dims=True)
+                                # net = tf.concat([mean,var],3)
+
+                                ## Apply attention + stats
+                                attention =self.attention_layer(net)
+                                end_points['attention']=attention
+                                mean,std=tf.nn.weighted_moments(net,1,attention,keep_dims=True)
+                                net = tf.concat([mean,std],3)
+
                                 end_points['global_pool'] = net
 
-                            #Fully Connected layers
-                            #fc1
+                            ## Fully Connected layers
+                            ## fc1
                             net = layers_lib.conv2d(net, 1000, [1, 1], stride=1, activation_fn=None,
                                             normalizer_fn=None, scope='fc1')
                             end_points[sc.name + '/fc1'] = net
                             net = layers.batch_norm(net, activation_fn=tf.nn.relu, scope='fc1_bn')
-                            #fc2
+                            ## fc2
                             net = layers_lib.conv2d(net, 512, [1, 1], stride=1, activation_fn=None,
                                             normalizer_fn=None, scope='fc2')
                             end_points[sc.name + '/fc2'] = net
-                            net = layers.batch_norm(net, activation_fn=tf.nn.relu, scope='fc2_bn')
 
-                            #outputlayer
-                            net = layers_lib.conv2d(net, num_classes, [1, 1], stride=1, activation_fn=None,
-                                            normalizer_fn=None, scope='logits')
-                            end_points[sc.name + '/logits'] = net
+                            ## output layer
+                            ## For AM-softmax loss
                             net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
                             end_points[sc.name + '/spatial_squeeze'] = net
+                            net, embedding = self.AM_logits_compute(net, spk_labels, num_classes,is_training)
+                            end_points[sc.name + '/logits'] = net
+                            end_points[sc.name + '/fc3'] = embedding
 
+                            ## for softmax
+#                             net = layers.batch_norm(net, activation_fn=tf.nn.relu, scope='fc2_bn')
+#                             net = layers_lib.conv2d(net, num_classes, [1, 1], stride=1, activation_fn=None,
+#                                             normalizer_fn=None, scope='logits')
+#                             end_points[sc.name + '/logits'] = net
+#                             net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
+#                             end_points[sc.name + '/spatial_squeeze'] = net
+
+
+                            ## loss
                             end_points['predictions'] = layers.softmax(net, scope='predictions')
-
-                            #loss
                             loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=spk_labels, logits=net))
                             end_points[sc.name + '/loss'] = loss
                             end_points[sc.name + '/spk_labels'] = spk_labels
@@ -111,11 +131,13 @@ class nn:
 
 
 
-#     def cmvn(self,temp_batch):
-#         mean = tf.reduce_mean(temp_batch,1,keep_dims=True)
-#         std = tf.sqrt( tf.reduce_mean( tf.square(temp_batch-mean),1,keep_dims=True) )
-#         temp_batch = tf.divide(tf.subtract(temp_batch , mean),std)
-#         return temp_batch
+
+
+    def cmvn(self,temp_batch):
+        mean = tf.reduce_mean(temp_batch,1,keep_dims=True)
+        std = tf.sqrt( tf.reduce_mean( tf.square(temp_batch-mean),1,keep_dims=True) )
+        temp_batch = tf.divide(tf.subtract(temp_batch , mean),std)
+        return temp_batch
 
     def cmn(self,temp_batch):
         temp_batch = tf.squeeze(temp_batch,axis=-1)
@@ -220,3 +242,37 @@ class nn:
         raise ValueError('The target output_stride cannot be reached.')
 
       return net
+
+
+    def AM_logits_compute(self,embeddings, label_batch, nrof_classes,is_training):
+	## refer https://github.com/Joker316701882/Additive-Margin-Softmax.git
+        m = 0.35
+        s = 30
+        with tf.variable_scope('AM_logits'):
+            am_fc_norm = tf.nn.l2_normalize(embeddings, 1, 1e-10, name='embeddings')
+            kernel = tf.get_variable(name='am_kernel',dtype=tf.float32,shape=[512,nrof_classes],initializer=tf.contrib.layers.xavier_initializer(uniform=False))
+            kernel_norm = tf.nn.l2_normalize(kernel, 0, 1e-10, name='kernel_norm')
+            cos_theta = tf.matmul(am_fc_norm, kernel_norm)
+            cos_theta = tf.clip_by_value(cos_theta, -1,1) # for numerical steady
+            phi = cos_theta - m
+            label_onehot = tf.one_hot(label_batch, nrof_classes)
+            adjust_theta = s * tf.where(tf.equal(label_onehot,1), phi, cos_theta)
+            return adjust_theta,am_fc_norm
+
+
+
+    def attention_layer(self, net):
+        # net : batchsize X W(frame_length) X 1 X Dim
+        channel_dim = net.get_shape()[3].value
+        attention_dim = 64
+        heads_dim = 1
+        W = tf.get_variable(name='att_W',dtype=tf.float32, shape=[channel_dim,attention_dim],initializer=tf.contrib.layers.xavier_initializer(uniform=False))
+        #b = tf.get_variable(name='att_b',dtype=tf.float32, shape=[attention_dim],initializer=tf.contrib.layers.xavier_initializer(uniform=True))
+        v = tf.get_variable(name='att_v',dtype=tf.float32, shape=[attention_dim,heads_dim],initializer=tf.contrib.layers.xavier_initializer(uniform=False))
+        #k = tf.get_variable(name='att_k',dtype=tf.float32, shape=[heads_dim],initializer=tf.contrib.layers.xavier_initializer(uniform=True))
+
+#         A = tf.nn.softmax( tf.matmul(tf.nn.relu(tf.matmul(net,W)), v), name='alphas',axis=1)
+        A = tf.nn.softmax( tf.matmul(tf.nn.tanh(tf.matmul(net,W)), v), name='alphas',axis=1)
+#        A = tf.nn.softmax( tf.bias_add(tf.matmul(tf.nn.relu( tf.nn.bias_add(tf.matmul(net,W),b) ), v), k), name='alphas',axis=1)
+        # A: batchsize X W)(frame_length) X 1 X heads_dim
+        return A
