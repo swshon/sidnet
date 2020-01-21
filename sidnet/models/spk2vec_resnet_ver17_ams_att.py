@@ -265,24 +265,11 @@ class nn:
 
 
     def AM_logits_compute(self,embeddings, label_batch, nrof_classes,is_training):
-
-        '''
-        loss head proposed in paper:<Additive Margin Softmax for Face Verification>
-        link: https://arxiv.org/abs/1801.05599
-        embeddings : normalized embedding layer of Facenet, it's normalized value of output of resface
-        label_batch : ground truth label of current training batch
-        args:         arguments from cmd line
-        nrof_classes: number of classes
-        '''
+	# refer https://github.com/Joker316701882/Additive-Margin-Softmax.git
         m = 0.35
         s = 30
-
         with tf.variable_scope('AM_logits'):
-#            am_fc_bn = self.batch_norm_wrapper_fc(embeddings, is_training,'am_fc_bn',True)
-#            am_fc_relu = tf.nn.relu(am_fc_bn)
-#            am_fc = self.fc_layer(am_fc_relu,400,"am_fc")
             am_fc_norm = tf.nn.l2_normalize(embeddings, 1, 1e-10, name='embeddings')
-
             kernel = tf.get_variable(name='am_kernel',dtype=tf.float32,shape=[512,nrof_classes],initializer=tf.contrib.layers.xavier_initializer(uniform=False))
             kernel_norm = tf.nn.l2_normalize(kernel, 0, 1e-10, name='kernel_norm')
             cos_theta = tf.matmul(am_fc_norm, kernel_norm)
@@ -290,9 +277,7 @@ class nn:
             phi = cos_theta - m
             label_onehot = tf.one_hot(label_batch, nrof_classes)
             adjust_theta = s * tf.where(tf.equal(label_onehot,1), phi, cos_theta)
-
             return adjust_theta,am_fc_norm
-
        
 
 
