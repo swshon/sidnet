@@ -22,7 +22,7 @@ A brief features of the training scheme is below
 
 
 # Performance evaluation on Voxceleb1 test benchmark test using voxceleb1 training set (EER)
-Scoring was done using Cosine similarity. Note these result only use voxceleb1 development dataset for training. There's no training data augmentation using noise or Room Impulse Response (RIR).
+Scoring was done using Cosine similarity. Note these result only use voxceleb1 development dataset (total 1211 speakers) for training. There's no training data augmentation using noise or Room Impulse Response (RIR).
 
     5 layer CNN + Softmax: 7.06%
     5 layer CNN + Additive Margin Softmax (AMS) : 6.16%
@@ -38,7 +38,7 @@ For comparison,
     Chung et al. (Thin Resnet-34, SAP, Softmax, Augmentation): 5.71%
 
 # Performance evaluation on Voxceleb1 test benchmark test using voxceleb1+2 training set (EER)
-Scoring was done using Cosine similarity. Note these result only use voxceleb1 development dataset for training. There's no training data augmentation using noise or Room Impulse Response (RIR).
+Scoring was done using Cosine similarity. Note these result use voxceleb1 and voxceleb2 development dataset (total 7205 speakers) for training. There's no training data augmentation using noise or Room Impulse Response (RIR).
 
     REsnet-50 + AMS + Self Attention Pooling (SAP) : 2.78%
     
