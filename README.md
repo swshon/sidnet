@@ -1,5 +1,5 @@
 # Speaker ID NETwork (SIDNET) Tool
-This repository provides SIDNET Tool for the speaker verification task.
+This repository provides SIDNET Tool for the speaker verification task. Note that this toolkit does not rely on Kaldi although it has almost similar data prepration format to Kaldi.
 
 # Tutorial ( egs/voxceleb1)
 First, you need to download dataset and clone this repository. Then run
