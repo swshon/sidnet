@@ -153,11 +153,11 @@ class nn:
 
 
 
-#     def cmvn(self,temp_batch):
-#         mean = tf.reduce_mean(temp_batch,1,keep_dims=True)
-#         std = tf.sqrt( tf.reduce_mean( tf.square(temp_batch-mean),1,keep_dims=True) )
-#         temp_batch = tf.divide(tf.subtract(temp_batch , mean),std)
-#         return temp_batch
+    def cmvn(self,temp_batch):
+        mean = tf.reduce_mean(temp_batch,1,keep_dims=True)
+        std = tf.sqrt( tf.reduce_mean( tf.square(temp_batch-mean),1,keep_dims=True) )
+        temp_batch = tf.divide(tf.subtract(temp_batch , mean),std)
+        return temp_batch
 
     def cmn(self,temp_batch):
         temp_batch = tf.squeeze(temp_batch,axis=-1)
