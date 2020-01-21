@@ -1,7 +1,7 @@
 # Speaker ID NETwork (SIDNET) Tool
 This repository provides SIDNET Tool for the speaker verification task.
 
-# Tutorial (on Voxceleb1)
+# Tutorial ( egs/voxceleb1)
 First, you need to download dataset and clone this repository. Then run
 
     cd egs/voxceleb1/v1
@@ -29,21 +29,21 @@ Scoring was done using Cosine similarity. Note these result only use voxceleb1 d
     Resnet-50 + Softmax : 7.33%
     Resnet-50 + AMS :6.10%
     REsnet-50 + AMS + Self Attention Pooling (SAP) : 5.73%    
-    
+
 For comparison,
-    
+
     Nagrani et al. (VGG-M): 7.82%
     Hajibabaei et al. (Temporal average pooling, Cosine Similarity , Resnet20, AMS, Augmentation): 4.30%
     Okabe et al. (x-vector, PLDA, Softmax, SAP, Augmentation) : 3.85%
     Chung et al. (Thin Resnet-34, SAP, Softmax, Augmentation): 5.71%
 
-# Performance evaluation on Voxceleb1 test benchmark test using voxceleb1+2 training set (EER)
+# Performance evaluation on Voxceleb1 test benchmark test using voxceleb1+2 training set (EER) (not yet updated this tutorial on egs folder)
 Scoring was done using Cosine similarity. Note these result use voxceleb1 and voxceleb2 development dataset (total 7205 speakers) for training. There's no training data augmentation using noise or Room Impulse Response (RIR).
 
     REsnet-50 + AMS + Self Attention Pooling (SAP) : 2.78%
-    
+
 For comparison,
-    
+
     Xie et al. (Thin Resnet-34, GhostVLAD, Softmax): 3.22%
     Xie et al. (Thin Resnet-34, GhostVLAD, AMS): 3.23%
 

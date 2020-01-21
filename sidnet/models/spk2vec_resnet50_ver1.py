@@ -82,14 +82,14 @@ class nn:
                                 # net = tf.reduce_mean(net, [1], name='pool5', keep_dims=True)
 
                                 ## Global statistical pooling
-                                # mean,var = tf.nn.moments(net,1,name='pool5', keep_dims=True)
-                                # net = tf.concat([mean,var],3)
+                                mean,var = tf.nn.moments(net,1,name='pool5', keep_dims=True)
+                                net = tf.concat([mean,var],3)
 
                                 ## Apply attention + stats
-                                attention =self.attention_layer(net)
-                                end_points['attention']=attention
-                                mean,std=tf.nn.weighted_moments(net,1,attention,keep_dims=True)
-                                net = tf.concat([mean,std],3)
+                                # attention =self.attention_layer(net)
+                                # end_points['attention']=attention
+                                # mean,std=tf.nn.weighted_moments(net,1,attention,keep_dims=True)
+                                # net = tf.concat([mean,std],3)
 
                                 end_points['global_pool'] = net
 
@@ -106,19 +106,19 @@ class nn:
 
                             ## output layer
                             ## For AM-softmax
-                            net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
-                            end_points[sc.name + '/spatial_squeeze'] = net
-                            net, embedding = self.AM_logits_compute(net, spk_labels, num_classes,is_training)
-                            end_points[sc.name + '/logits'] = net
-                            end_points[sc.name + '/fc3'] = embedding
+                            # net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
+                            # end_points[sc.name + '/spatial_squeeze'] = net
+                            # net, embedding = self.AM_logits_compute(net, spk_labels, num_classes,is_training)
+                            # end_points[sc.name + '/logits'] = net
+                            # end_points[sc.name + '/fc3'] = embedding
 
                             ## for softmax
-#                             net = layers.batch_norm(net, activation_fn=tf.nn.relu, scope='fc2_bn')
-#                             net = layers_lib.conv2d(net, num_classes, [1, 1], stride=1, activation_fn=None,
-#                                             normalizer_fn=None, scope='logits')
-#                             end_points[sc.name + '/logits'] = net
-#                             net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
-#                             end_points[sc.name + '/spatial_squeeze'] = net
+                            net = layers.batch_norm(net, activation_fn=tf.nn.relu, scope='fc2_bn')
+                            net = layers_lib.conv2d(net, num_classes, [1, 1], stride=1, activation_fn=None,
+                                            normalizer_fn=None, scope='logits')
+                            end_points[sc.name + '/logits'] = net
+                            net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
+                            end_points[sc.name + '/spatial_squeeze'] = net
 
 
                             ## loss

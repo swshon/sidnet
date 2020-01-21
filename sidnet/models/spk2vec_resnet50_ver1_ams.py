@@ -105,7 +105,7 @@ class nn:
                             end_points[sc.name + '/fc2'] = net
 
                             ## output layer
-                            ## For AM-softmax loss
+                            ## For AM-softmax
                             net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
                             end_points[sc.name + '/spatial_squeeze'] = net
                             net, embedding = self.AM_logits_compute(net, spk_labels, num_classes,is_training)
