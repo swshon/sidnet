@@ -28,7 +28,8 @@ if [ $stage -eq 1 ]; then
 fi
 
 if [ $stage -eq 2 ]; then
-  # Extract for NN input and save in tfrecords format for Tensorflow
+  ## Extract for NN input and save in tfrecords format for Tensorflow
+  ## This process may take a while and recommend to process in parallel if you have multiple cpu clusters
   mkdir -p data/tfrecords
   mkdir -p log/feats
   TOTAL_SPLIT=100
@@ -49,7 +50,7 @@ if [ $stage -eq 2 ]; then
         --current_split $split \
         --save_folder data/tfrecords \
         --utt2label utt2spk \
-        --fixed_len 598 &
+        --fixed_len 598
     done
   done
 fi
@@ -71,7 +72,7 @@ if [ $stage -eq 3 ]; then
   --total_split 1 \
   --current_split 1 \
   --save_folder data/tfrecords \
-  --utt2label utt2spk &
+  --utt2label utt2spk
 fi
 
 
@@ -97,7 +98,7 @@ if [ $stage -eq 4 ]; then
         --current_split $split \
         --save_folder data/tfrecords \
         --utt2label utt2spk \
-        --fixed_len 598 &
+        --fixed_len 598
     done
   done
 fi
@@ -133,5 +134,5 @@ if [ $stage -eq 5 ]; then
   --print_loss_interval 1  \
   --print_train_acc_interval 10 \
   --momentum 0.9 \
-  --embedding_scope fc2 &
+  --embedding_scope fc2
 fi
