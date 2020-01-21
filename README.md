@@ -54,5 +54,5 @@ For comparison,
 
 # Reference
     
-    [1] S. Shon, H. Tang, and J. Glass, "Frame-Level Speaker Embeddings for Text-Independent Speaker Recognition and Analysis of End-to-End Model," Proc. SLT, pp. 1007-1013, 2018
+[1] S. Shon, H. Tang, and J. Glass, "Frame-Level Speaker Embeddings for Text-Independent Speaker Recognition and Analysis of End-to-End Model," Proc. SLT, pp. 1007-1013, 2018
 
