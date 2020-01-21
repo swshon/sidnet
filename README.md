@@ -52,7 +52,7 @@ For comparison,
     tensorflow (python library, tested on 1.14)
     librosa (python library, tested on 0.6.0)
 
-# Reference
+# References
     
 [1] S. Shon, H. Tang, and J. Glass, "Frame-Level Speaker Embeddings for Text-Independent Speaker Recognition and Analysis of End-to-End Model," Proc. SLT, pp. 1007-1013, 2018
 
