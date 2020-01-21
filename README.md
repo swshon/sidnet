@@ -1,5 +1,5 @@
 # Speaker ID NETwork (SIDNET) Tool
-This repository provides SIDNET Tool for the speaker verification task. Note that this toolkit does not rely on Kaldi although it has almost similar data prepration format to Kaldi.
+This repository provides SIDNET Tool for the speaker verification task. This toolkit does not rely on Kaldi although it has almost similar data prepration format to Kaldi. This toolkit was originally written to analyze the internal representation of speaker recognition network[1].
 
 # Tutorial ( egs/voxceleb1)
 First, you need to download dataset and clone this repository. Then run
@@ -51,3 +51,8 @@ For comparison,
     Python 2.7
     tensorflow (python library, tested on 1.14)
     librosa (python library, tested on 0.6.0)
+
+# Reference
+    
+    [1] S. Shon, H. Tang, and J. Glass, "Frame-Level Speaker Embeddings for Text-Independent Speaker Recognition and Analysis of End-to-End Model," Proc. SLT, pp. 1007-1013, 2018
+
